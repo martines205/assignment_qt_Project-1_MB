@@ -13,7 +13,8 @@ QT_END_NAMESPACE
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-
+    enum {GET_URL_API, GET_URL_IMAGE};
+    void showUrlImage(const QString& url);
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
@@ -27,7 +28,10 @@ private slots:
     void on_Edit_clicked();
 
 
+    void on_checkBoxImageScaledToContents_stateChanged(int arg1);
+
 private:
+    int m_nGetUrlMode=GET_URL_API;
     Ui::MainWindow *ui;
     QNetworkAccessManager* mNetManager=NULL;
     QString id;

@@ -11,10 +11,17 @@ https://api.thecatapi.com/v1/images/7nA3AVPKO
 
 */
 
+void MainWindow::showUrlImage(const QString &url)
+{
+    m_nGetUrlMode=GET_URL_IMAGE;
+    mNetManager->get(QNetworkRequest(QUrl(url)));
+}
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
+    , ui(new Ui::MainWindow) //, height(10)
 {
+//    ui = new Ui::MainWindow();
     ui->setupUi(this);
     mNetManager = new QNetworkAccessManager(this);
     connect(mNetManager,&QNetworkAccessManager::finished,
@@ -24,11 +31,13 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    delete mNetManager; // jika tdk dikerjakan, maka -> memory leak
     delete ui;
 }
 
 void MainWindow::openUrl(const QString &url)
 {
+    m_nGetUrlMode=GET_URL_API;
     mNetManager->get(QNetworkRequest(QUrl(url)));
 }
 
@@ -44,6 +53,7 @@ void MainWindow::testJson(QByteArray data)
     foreach (const QJsonValue & v, obj){
         url = v.toObject().value("url").toString();
         ui->MainWindow::lineEdit_2->setText(url);
+        showUrlImage(url);
     }
     foreach (const QJsonValue & v, obj){
        height = v.toObject().value("height").toInt();
@@ -73,13 +83,26 @@ void MainWindow::handelNetFinished(QNetworkReply *reply)
 {
     if (reply->error()==QNetworkReply::NoError){
         QByteArray data = reply->readAll();
-        qDebug()<<data;
-        testJson(data);
-        qDebug("sukses");
+        switch (m_nGetUrlMode) {
+            case  GET_URL_API:
+                qDebug()<<data;
+                testJson(data);
+                qDebug("sukses");
+            break;
+            case GET_URL_IMAGE:
+            {
+                QPixmap img;
+                img.loadFromData(data);
+//                ui->labelImage->setScaledContents(true);
+                ui->labelImage->setPixmap(img);
+            }
+            break;
+        }
     }
     else{
         qDebug("Error");
     }
+    reply->deleteLater();
 }
 
 
@@ -88,3 +111,9 @@ void MainWindow::on_Edit_clicked()
     openUrl(ui->lineEdit->text());
 
 }
+
+void MainWindow::on_checkBoxImageScaledToContents_stateChanged(int arg1)
+{
+    ui->labelImage->setScaledContents(arg1);
+}
+
